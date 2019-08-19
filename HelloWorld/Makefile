@@ -7,14 +7,8 @@
 # Review ps2sdk README & LICENSE files for further details.
 
 EE_BIN = hello.elf
-
 EE_OBJS = main.o
 EE_LIBS = -lpatches
 
 #Include preferences
-# include $(PS2SDK)/samples/Makefile.pref
-# include $(PS2SDK)/samples/Makefile.eeglobal
-
-#Include UJ preferences
-include $(PS2SDKUJ)/samples/Makefile.pref
-include $(PS2SDKUJ)/samples/Makefile.eeglobal
+include ../Makefile.pref

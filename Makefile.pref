@@ -1,0 +1,12 @@
+EE_CC_VERSION != $(EE_CC) -dumpversion 2>&1
+PS2_SDK_FOLDER = $(PS2SDK)
+ifeq ($(EE_CC_VERSION),9.1.0)
+	PS2_SDK_FOLDER = $(PS2SDKUJ)
+endif
+
+#Include preferences
+include $(PS2_SDK_FOLDER)/samples/Makefile.pref
+include $(PS2_SDK_FOLDER)/samples/Makefile.eeglobal
+
+clean:
+	rm -f $(EE_BIN) $(EE_OBJS)
