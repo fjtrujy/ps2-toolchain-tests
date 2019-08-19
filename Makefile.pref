@@ -9,4 +9,4 @@ include $(PS2_SDK_FOLDER)/samples/Makefile.pref
 include $(PS2_SDK_FOLDER)/samples/Makefile.eeglobal
 
 clean:
-	rm -f $(EE_BIN) $(EE_OBJS)
+	rm -f $(EE_BIN) $(EE_OBJS) $(EE_IRX_CS)
