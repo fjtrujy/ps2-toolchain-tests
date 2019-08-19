@@ -43,6 +43,8 @@ int main()
       printf("Error: fileXioInit library not initalizated\n");
    }
 
+   fileXioDclose(-19);
+
    printf("Hello, world!\n");
 
    while (1)
