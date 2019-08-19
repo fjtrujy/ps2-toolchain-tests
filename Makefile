@@ -1,4 +1,4 @@
-all: clean build
+all: clean build fileXio
 
 helloWorld-clean:
 	$(MAKE) -C HelloWorld clean
@@ -10,7 +10,12 @@ printFloatValue-clean:
 printFloatValue-build:
 	$(MAKE) -C PrintFloatValue
 
+fileXio-clean:
+	$(MAKE) -C FileXio clean
+fileXio-build:
+	$(MAKE) -C FileXio
 
-clean: helloWorld-clean printFloatValue-clean
 
-build: helloWorld-build printFloatValue-build
+clean: helloWorld-clean printFloatValue-clean fileXio-clean
+
+build: helloWorld-build printFloatValue-build fileXio-build
