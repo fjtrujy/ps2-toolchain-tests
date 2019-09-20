@@ -9,10 +9,14 @@
 int main()
 {
    unsigned long long currentTime;
-
+   int times;
+   
    SifInitRpc(0);
+#if !defined(DEBUG)
    /* Comment this line if you don't wanna debug the output */
    while(!SifIopReset(NULL, 0)){};
+#endif
+
 
    while(!SifIopSync()){};
    SifInitRpc(0);
@@ -23,8 +27,13 @@ int main()
    while (1)
    {
       /* code */
-      currentTime = clock();
-      printf("Current time %llu\n", currentTime);
+      if (times == 100000000) {
+         currentTime = clock();
+         printf("Current time %llu\n", currentTime);
+         times = 0;
+      } else {
+         times++;
+      }
    }
    
 

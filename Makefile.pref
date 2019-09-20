@@ -1,7 +1,14 @@
-EE_CC_VERSION != $(EE_CC) -dumpversion 2>&1
+PS2_IP = 192.168.2.150
+DEBUG = 0
+
+# EE_CC_VERSION != $(EE_CC) -dumpversion 2>&1
+# PS2_SDK_FOLDER = $(PS2SDK)
+# ifeq ($(EE_CC_VERSION),9.1.0)
 PS2_SDK_FOLDER = $(PS2SDK)
-ifeq ($(EE_CC_VERSION),9.1.0)
-	PS2_SDK_FOLDER = $(PS2SDKUJ)
+# endif
+
+ifeq ($(DEBUG), 1)
+   EE_CFLAGS = -O0 -g -DDEBUG
 endif
 
 #Include preferences
@@ -10,3 +17,12 @@ include $(PS2_SDK_FOLDER)/samples/Makefile.eeglobal
 
 clean:
 	rm -f $(EE_BIN) $(EE_OBJS) $(EE_IRX_CS)
+
+prepare:
+	ps2client -h $(PS2_IP) reset
+	ps2client -h $(PS2_IP) netdump
+
+run:
+	ps2client -h $(PS2_IP) execee host:$(EE_BIN)
+
+debug: prepare run
