@@ -27,6 +27,8 @@ int main()
    SifInitRpc(0);
    sbv_patch_enable_lmb();
 
+   printf("Hello, start the program!\n");
+
 
    /* I/O Files, Load Driver */
    int rett;
@@ -39,10 +41,12 @@ int main()
    rett = SifExecModuleBuffer(&freesio2_irx, size_freesio2_irx, 0, NULL, NULL);
    printf("SifExecModuleBuffer: freesio2_irx %i\n", rett);
 
-
+   printf("Before init fileXio\n");
    if (fileXioInit() < 0) {
       printf("Error: fileXioInit library not initalizated\n");
    }
+
+   printf("After init fileXio\n");
 
    fileXioDclose(-19);
 
