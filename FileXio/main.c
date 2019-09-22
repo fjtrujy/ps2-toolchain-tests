@@ -18,6 +18,7 @@ extern unsigned int size_iomanX_irx;
 
 int main()
 {
+   int times;
    SifInitRpc(0);
    /* Comment this line if you don't wanna debug the output */
    while(!SifIopReset(NULL, 0)){};
@@ -47,9 +48,16 @@ int main()
 
    printf("Hello, world!\n");
 
+   times = 0;
    while (1)
    {
       /* code */
+      if (times == 100000000) {
+         printf("Still alive\n");
+         times = 0;
+      } else {
+         times++;
+      }
    }
    
 
