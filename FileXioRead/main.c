@@ -16,7 +16,7 @@ extern unsigned int size_freesio2_irx;
 extern unsigned char iomanX_irx;
 extern unsigned int size_iomanX_irx;
 
-#define O_RDONLY        0x0000          /* open for reading only */
+#define O_RDONLY        0x0001          /* open for reading only */
 
 int main()
 {
@@ -54,12 +54,14 @@ int main()
    printf("After init fileXio\n");
 
 
-	if((fd=fileXioOpen("host:hello.txt", O_RDONLY))>=0){
+	if((fd=fileXioOpen("host:Doom/doom1.wad", O_RDONLY))>=0){
+      printf("File Descriptor %i\n", fd);
 		size=fileXioLseek(fd, 0, SEEK_END);
+      printf("Size of file %i\n", size);
 		fileXioLseek(fd, 0, SEEK_SET);
 		if((FileBuffer=malloc(size))!=NULL){
 			if(fileXioRead(fd, FileBuffer, size)==size){
-            printf("OK!!!!\n");
+            printf("OK!!!!, %i bytes readed\n", size);
          } else {
             printf("ERROR: fileXioRead\n");
          }

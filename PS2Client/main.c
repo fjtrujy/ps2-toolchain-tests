@@ -27,6 +27,9 @@ int main(int argc, char *argv[])
         printf("Argument #%d is %s\n", i, argv[i]);
     }
 
+    printf("Maybe crash\n");
+    printf("******** %s *********\n", argv[0]);
+
    loop();
    
    return 0;

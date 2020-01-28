@@ -5,25 +5,29 @@
 #include <iopcontrol.h>
 #include <stdio.h>
 
+#include <stdio.h>
+
+extern int i1, i2, i3, i4;
+
 int main()
 {
-   SifInitRpc(0);
-#if !defined(DEBUG)
-   /* Comment this line if you don't wanna debug the output */
-   while(!SifIopReset(NULL, 0)){};
-#endif
+       printf("i1=%d\n", i1);
+       printf("i2=%d\n", i2);
+       printf("i3=%d\n", i3);
+       printf("i4=%d\n", i4);
 
-   while(!SifIopSync()){};
-   SifInitRpc(0);
-
-   printf("Hello, world!\n");
-
-   while (1)
-   {
-      /* code */
-      printf("Hello, world!\n");
-   }
-   
-
-   return 0;
+       return 0;
 }
+
+asm(
+".sdata         \n"
+"dummy: .word 0 \n" // <- insert 1, 2, 3 or 4 dummy words, and see what happens!
+".globl i1      \n"
+"i1: .word 1111 \n"
+".globl i2      \n"
+"i2: .word 2222 \n"
+".globl i3      \n"
+"i3: .word 3333 \n"
+".globl i4      \n"
+"i4: .word 4444 \n"
+);

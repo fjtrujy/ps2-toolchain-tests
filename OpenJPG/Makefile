@@ -8,13 +8,8 @@
 
 EE_BIN = hello.elf
 EE_OBJS = main.o
-EE_LIBS = -L$(PS2SDK)/ports/lib -ldebug -ljpeg -lpatches
+EE_LIBS += -L$(PS2SDK)/ports/lib -ljpeg -ldebug
 EE_INCS += -I$(PS2SDK)/ports/include
-
-EE_INCS += -I$(LIBJPEG)/include
-EE_CFLAGS += -DHAVE_LIBJPEG
-EE_LIB_DIRS += -L$(LIBJPEG)/lib
-EE_LIBS += -ljpeg -lfileXio -ldebug
 
 #Include preferences
 include ../Makefile.pref

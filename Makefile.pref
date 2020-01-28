@@ -1,5 +1,5 @@
 PS2_IP = 192.168.1.150
-DEBUG = 0
+DEBUG = 1
 
 # EE_CC_VERSION != $(EE_CC) -dumpversion 2>&1
 # PS2_SDK_FOLDER = $(PS2SDK)

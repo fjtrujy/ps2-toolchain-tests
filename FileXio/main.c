@@ -16,12 +16,17 @@ extern unsigned int size_freesio2_irx;
 extern unsigned char iomanX_irx;
 extern unsigned int size_iomanX_irx;
 
+#define O_RDONLY        0x0000          /* open for reading only */
+
 int main()
 {
    int times;
+   int fd, size;
+	char *FileBuffer;
+
    SifInitRpc(0);
    /* Comment this line if you don't wanna debug the output */
-   while(!SifIopReset(NULL, 0)){};
+   // while(!SifIopReset(NULL, 0)){};
 
    while(!SifIopSync()){};
    SifInitRpc(0);
@@ -48,7 +53,24 @@ int main()
 
    printf("After init fileXio\n");
 
-   fileXioDclose(-19);
+
+	if((fd=fileXioOpen("host:hello.txt", O_RDONLY))>=0){
+		size=fileXioLseek(fd, 0, SEEK_END);
+		fileXioLseek(fd, 0, SEEK_SET);
+		if((FileBuffer=malloc(size))!=NULL){
+			if(fileXioRead(fd, FileBuffer, size)==size){
+            printf("OK!!!!\n");
+         } else {
+            printf("ERROR: fileXioRead\n");
+         }
+      } else {
+         printf("ERROR DURING ALLOC\n");
+      }
+   } else {
+      printf("ERROR opening File\n");
+   }
+
+   fileXioClose(fd);
 
    printf("Hello, world!\n");
 
