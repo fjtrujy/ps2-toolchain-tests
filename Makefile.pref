@@ -1,5 +1,5 @@
 PS2_IP = 192.168.1.150
-DEBUG = 1
+DEBUG = 0
 
 # EE_CC_VERSION != $(EE_CC) -dumpversion 2>&1
 # PS2_SDK_FOLDER = $(PS2SDK)
@@ -18,8 +18,10 @@ include $(PS2_SDK_FOLDER)/samples/Makefile.eeglobal
 clean:
 	rm -f $(EE_BIN) $(EE_OBJS) $(EE_IRX_CS)
 
-prepare:
+reset:
 	ps2client -h $(PS2_IP) reset
+
+prepare: reset
 	ps2client -h $(PS2_IP) netdump
 
 run:
