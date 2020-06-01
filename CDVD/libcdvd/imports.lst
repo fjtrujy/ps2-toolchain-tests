@@ -7,6 +7,7 @@ I_sceCdSync
 I_sceCdDiskReady
 I_sceCdGetDiskType
 I_sceCdTrayReq
+I_sceCdSearchFile
 cdvdman_IMPORTS_end
 
 intrman_IMPORTS_start

@@ -19,9 +19,8 @@ struct TocEntry
     u32 fileLBA;
     u32 fileSize;
     u8 fileProperties;
-    u8 padding1[3];
+    unsigned char dateStamp[8];
     char filename[128 + 1];
-    u8 padding2[3];
 } __attribute__((packed));
 
 
