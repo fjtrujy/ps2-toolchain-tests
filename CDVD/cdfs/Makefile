@@ -1,6 +1,6 @@
 IOP_BIN = cdfs.irx
 
-IOP_OBJS = cdfs_iop.o imports.o
+IOP_OBJS = main.o cdfs_iop.o imports.o
 
 
 all: $(IOP_BIN)
