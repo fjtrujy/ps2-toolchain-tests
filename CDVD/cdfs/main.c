@@ -1,18 +1,6 @@
-#include <tamtypes.h>
-#include <loadcore.h>
-#include <thsemap.h>
-#include <intrman.h>
-#include <thbase.h>
-#include <loadcore.h>
-#include <sifman.h>
-#include <sifcmd.h>
-#include <ioman.h>
-#include <cdvdman.h>
-#include <sysclib.h>
 #include <stdio.h>
-#include <sysmem.h>
+#include <ioman.h>
 #include <iox_stat.h>
-#include <alloc.h>
 
 #include "cdfs_iop.h"
 
@@ -67,9 +55,7 @@ static int CDVD_init(iop_device_t *driver)
     printf("by A.Lee (aka Hiryu) & Nicholas Van Veen (aka Sjeep)\n\n");
     printf("CDVD: Initializing '%s' file driver.\n\n", driver->name);
 
-    int ret = sceCdInit(SCECdINoD);
-    printf("sceCdInit %i\n\n", ret);
-
+    CDVD_start();
     return 0;
 }
 
@@ -79,14 +65,6 @@ static int CDVD_deinit(iop_device_t *driver)
     printf("CDVD_deinit\n\n");
 #endif
     return 0;
-}
-
-static int CDVD_format(iop_device_t *driver)
-{
-#if defined(DEBUG)
-    printf("CDVD: dummy CDVD_format function called\n\n");
-#endif
-    return -5;
 }
 
 static int CDVD_open(iop_file_t *f, const char *name, int mode)
@@ -134,21 +112,11 @@ static int CDVD_open(iop_file_t *f, const char *name, int mode)
     }
 
     fd_used[j] = 1;
-
-#ifdef DEBUG
-    printf("CDVD: internal fd %d\n", j);
-#endif
-
     fd_table[j].fd = f;
     fd_table[j].fileSize = tocEntry.fileSize;
     fd_table[j].LBA = tocEntry.fileLBA;
     fd_table[j].filePos = 0;
 
-#ifdef DEBUG
-    printf("tocEntry.fileSize = %d\n", tocEntry.fileSize);
-
-    printf("Opened file: %s\n", name);
-#endif
     f->privdata = (void *)j;
 
     return j;
@@ -166,15 +134,9 @@ static int CDVD_close(iop_file_t *f)
     i = (int)f->privdata;
 
     if (i >= MAX_FILES_OPENED) {
-#ifdef DEBUG
         printf("CDVD_close: ERROR: File does not appear to be open!\n");
-#endif
         return -1;
     }
-
-#ifdef DEBUG
-    printf("CDVD: internal fd %d\n", i);
-#endif
 
     fd_used[i] = 0;
 
@@ -203,12 +165,9 @@ static int CDVD_read(iop_file_t *f, void *buffer, int size)
     i = (int)f->privdata;
 
     if (i >= MAX_FILES_OPENED) {
-#ifdef DEBUG
         printf("CDVD_read: ERROR: File does not appear to be open!\n");
-#endif
         return -1;
     }
-
 
     // A few sanity checks
     if (fd_table[i].filePos > fd_table[i].fileSize) {
@@ -258,7 +217,6 @@ static int CDVD_read(iop_file_t *f, void *buffer, int size)
     }
 
     memcpy(buffer, local_buffer + off_sector, size);
-
     fd_table[i].filePos += size;
 
     return (size);
@@ -372,31 +330,23 @@ static int CDVD_openDir(iop_file_t *f, const char *path) {
     return j;
 }
 
-static int CDVD_closeDir(iop_file_t *fd, const char *path) 
+static int CDVD_closeDir(iop_file_t *fd) 
 {
     int i;
 
 #ifdef DEBUG
     printf("CDVD: CDVD_closeDir called.\n");
     printf("      kernel_fd.. %p\n", fd);
-    printf("      path....... %s\n\n", path);
 #endif
 
     i = (int)fd->privdata;
 
     if (i >= MAX_FOLDERS_OPENED) {
-#ifdef DEBUG
         printf("CDVD_close: ERROR: File does not appear to be open!\n");
-#endif
         return -1;
     }
 
-#ifdef DEBUG
-    printf("CDVD: internal fd %d\n", i);
-#endif
-
     fod_used[i] = 0;
-
     return 0;
 }
 
@@ -404,6 +354,7 @@ static int CDVD_dread(iop_file_t *fd, io_dirent_t *dirent)
 {
     int i;
     int filesIndex;
+    struct TocEntry entry;
 #ifdef DEBUG
     printf("CDVD: CDVD_dread called.\n");
     printf("      kernel_fd.. %p\n", fd);
@@ -412,20 +363,17 @@ static int CDVD_dread(iop_file_t *fd, io_dirent_t *dirent)
     i = (int)fd->privdata;
 
     if (i >= MAX_FOLDERS_OPENED) {
-#ifdef DEBUG
         printf("CDVD_dread: ERROR: Folder does not appear to be open!\n\n");
-#endif
         return -1;
     }
 
     filesIndex = fod_table[i].filesIndex;
     if (filesIndex >= fod_table[i].files) {
-#ifdef DEBUG
         printf("CDVD_dread: No more items pending to read!\n\n");
-#endif
         return -1;
     }
-    struct TocEntry entry = fod_table[i].entries[filesIndex];
+
+    entry = fod_table[i].entries[filesIndex];
 #ifdef DEBUG
     printf("CDVD_dread: fod_table index=%i, fileIndex=%i\n\n", i, filesIndex);
     printf("CDVD_dread: entries=%i\n\n", fod_table[i].files);
@@ -445,7 +393,6 @@ static int CDVD_dread(iop_file_t *fd, io_dirent_t *dirent)
     dirent->unknown = 0;
     
     fod_table[i].filesIndex++;
-
     return fod_table[i].filesIndex;
 }
 
@@ -481,22 +428,22 @@ static int dummy() {
 }
 
 static iop_device_ops_t filedriver_ops = {
-    &CDVD_init,
-    &CDVD_deinit,
-    &CDVD_format,
-    &CDVD_open,
-    &CDVD_close,
-    &CDVD_read,
-    &CDVD_write,
-    &CDVD_lseek,
+    (void *)CDVD_init,
+    (void *)CDVD_deinit,
+    (void *)&dummy,
+    (void *)CDVD_open,
+    (void *)CDVD_close,
+    (void *)CDVD_read,
+    (void *)CDVD_write,
+    (void *)CDVD_lseek,
     (void *)&dummy,
     (void *)&dummy,
     (void *)&dummy,
     (void *)&dummy,
-    &CDVD_openDir,
-    &CDVD_closeDir,
-    &CDVD_dread,
-    &CDVD_getstat,
+    (void *)CDVD_openDir,
+    (void *)CDVD_closeDir,
+    (void *)CDVD_dread,
+    (void *)CDVD_getstat,
     (void *)&dummy
 };
 
@@ -511,7 +458,7 @@ int _start(int argc, char **argv)
     file_driver.name = UNIT_NAME;
     file_driver.type = IOP_DT_FS;
     file_driver.version = 1;
-    file_driver.desc = "CDVD Filedriver";
+    file_driver.desc = "CDFS Filedriver";
     file_driver.ops = &filedriver_ops;
 
     DelDrv(UNIT_NAME);

@@ -1,18 +1,7 @@
-#include <tamtypes.h>
-#include <loadcore.h>
-#include <thsemap.h>
-#include <intrman.h>
-#include <thbase.h>
-#include <loadcore.h>
-#include <sifman.h>
-#include <sifcmd.h>
-#include <ioman.h>
-#include <cdvdman.h>
-#include <sysclib.h>
 #include <stdio.h>
-#include <sysmem.h>
-#include <iox_stat.h>
-#include <alloc.h>
+#include <libcdvd-common.h>
+#include <sysclib.h>
+#include <sifman.h>
 
 #include "cdfs_iop.h"
 
@@ -1102,6 +1091,11 @@ int CDVD_prepare(void) {
     cdReadMode.trycount = 0;
     cdReadMode.spindlctrl = SCECdSpinStm;
     cdReadMode.datapattern = SCECdSecS2048;
+}
+
+int CDVD_start()
+{
+    int ret = sceCdInit(SCECdINoD);
 }
 
 
