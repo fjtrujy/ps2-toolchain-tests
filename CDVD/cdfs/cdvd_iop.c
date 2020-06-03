@@ -28,6 +28,7 @@
 #define CDVD_IRX 0xB001337
 
 #define CDVD_FILEPROPERTY_DIR 0x02
+#define UNIT_NAME "cdfs"
 
 struct dirTocEntry
 {
@@ -1758,12 +1759,12 @@ int _start(int argc, char **argv)
     cdReadMode.datapattern = SCECdSecS2048;
 
     // setup the file_driver structure
-    file_driver.name = "cdfs";
+    file_driver.name = UNIT_NAME;
     file_driver.type = IOP_DT_FS;
     file_driver.version = 1;
     file_driver.desc = "CDVD Filedriver";
     file_driver.ops = &filedriver_ops;
 
-    DelDrv("cdfs");
+    DelDrv(UNIT_NAME);
     AddDrv(&file_driver);
 }

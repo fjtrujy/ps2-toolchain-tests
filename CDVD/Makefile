@@ -15,11 +15,11 @@ EE_LIBS = -lpatches
 include ../Makefile.pref
 
 irxs: 
-	make -C libcdvd
-	bin2c libcdvd/cdvd.irx cdvd_irx.c cdvd_irx
+	make -C cdfs
+	bin2c cdfs/cdvd.irx cdvd_irx.c cdvd_irx
 
 clean2: clean
-	make -C libcdvd clean
+	make -C cdfs clean
 	rm -f cdvd_irx.c
 
 
