@@ -10,7 +10,6 @@
 #define MAX_FOLDERS_OPENED 16
 #define MAX_BITS_READ 16384
 
-#define CDVD_FILEPROPERTY_DIR 0x02
 #define UNIT_NAME "cdfs"
 
 struct fdtable
@@ -47,40 +46,40 @@ static int last_bk = 0;
 *                                              *
 ***********************************************/
 
-static int CDVD_init(iop_device_t *driver)
+static int fio_init(iop_device_t *driver)
 {
-    printf("CDVD: CDVD Filesystem v1.2\n\n");
+    printf("CDFS Filesystem v1.2\n\n");
     printf("Re-edited by fjtrujy\n\n");
     printf("Original implementation\n\n");
     printf("by A.Lee (aka Hiryu) & Nicholas Van Veen (aka Sjeep)\n\n");
-    printf("CDVD: Initializing '%s' file driver.\n\n", driver->name);
+    printf("CDFS: Initializing '%s' file driver.\n\n", driver->name);
 
-    CDVD_start();
+    cdfs_start();
     return 0;
 }
 
-static int CDVD_deinit(iop_device_t *driver)
+static int fio_deinit(iop_device_t *driver)
 {
 #if defined(DEBUG)
-    printf("CDVD_deinit\n\n");
+    printf("fio_deinit\n\n");
 #endif
     return 0;
 }
 
-static int CDVD_open(iop_file_t *f, const char *name, int mode)
+static int fio_open(iop_file_t *f, const char *name, int mode)
 {
     int j;
     static struct TocEntry tocEntry;
 
 #ifdef DEBUG
-    printf("CDVD: CDVD_open called.\n");
+    printf("CDFS: fio_open called.\n");
     printf("      kernel_fd.. %p\n", f);
     printf("      name....... %s %x\n", name, (int)name);
     printf("      mode....... %d\n\n", mode);
 #endif
 
     // check if the file exists
-    if (!CDVD_findfile(name, &tocEntry)) {
+    if (!cdfs_findfile(name, &tocEntry)) {
         printf("***** FILE %s CAN NOT FOUND ******\n\n", name);
         return -1;
     }
@@ -91,7 +90,7 @@ static int CDVD_open(iop_file_t *f, const char *name, int mode)
     }   
 
 #ifdef DEBUG
-    printf("CDVD: CDVD_open TocEntry info\n");
+    printf("CDFS: fio_open TocEntry info\n");
     printf("      TocEntry....... %p\n", &tocEntry);
     printf("      fileLBA........ %i\n", tocEntry.fileLBA);
     printf("      fileSize....... %i\n", tocEntry.fileSize);
@@ -122,19 +121,19 @@ static int CDVD_open(iop_file_t *f, const char *name, int mode)
     return j;
 }
 
-static int CDVD_close(iop_file_t *f)
+static int fio_close(iop_file_t *f)
 {
     int i;
 
 #ifdef DEBUG
-    printf("CDVD: CDVD_close called.\n");
+    printf("CDFS: fio_close called.\n");
     printf("      kernel fd.. %p\n\n", f);
 #endif
 
     i = (int)f->privdata;
 
     if (i >= MAX_FILES_OPENED) {
-        printf("CDVD_close: ERROR: File does not appear to be open!\n");
+        printf("fio_close: ERROR: File does not appear to be open!\n");
         return -1;
     }
 
@@ -143,7 +142,7 @@ static int CDVD_close(iop_file_t *f)
     return 0;
 }
 
-static int CDVD_read(iop_file_t *f, void *buffer, int size)
+static int fio_read(iop_file_t *f, void *buffer, int size)
 {
     int i;
 
@@ -156,7 +155,7 @@ static int CDVD_read(iop_file_t *f, void *buffer, int size)
 
 
 #ifdef DEBUG
-    printf("CDVD: CDVD_read called\n\n");
+    printf("CDFS: fio_read called\n\n");
     printf("      kernel_fd... %p\n", f);
     printf("      buffer...... 0x%X\n", (int)buffer);
     printf("      size........ %d\n\n", size);
@@ -165,7 +164,7 @@ static int CDVD_read(iop_file_t *f, void *buffer, int size)
     i = (int)f->privdata;
 
     if (i >= MAX_FILES_OPENED) {
-        printf("CDVD_read: ERROR: File does not appear to be open!\n");
+        printf("fio_read: ERROR: File does not appear to be open!\n");
         return -1;
     }
 
@@ -192,7 +191,7 @@ static int CDVD_read(iop_file_t *f, void *buffer, int size)
     num_sectors = (num_sectors >> 11) + ((num_sectors & 2047) != 0);
 
 #ifdef DEBUG
-    printf("CDVD_read: read sectors %d to %d\n", start_sector, start_sector + num_sectors);
+    printf("fio_read: read sectors %d to %d\n", start_sector, start_sector + num_sectors);
 #endif
 
     // Skip a Sector for equal (use the last sector in buffer)
@@ -207,7 +206,7 @@ static int CDVD_read(iop_file_t *f, void *buffer, int size)
     // Read the data (we only ever get 16KB max request at once)
 
     if (read == 0 || (read == 1 && num_sectors > 1)) {
-        if (!CDVD_ReadSect(start_sector + read, num_sectors - read, local_buffer + ((read) << 11))) {
+        if (!cdfs_readSect(start_sector + read, num_sectors - read, local_buffer + ((read) << 11))) {
 #ifdef DEBUG
             printf("Couldn't Read from file for some reason\n");
 #endif
@@ -222,22 +221,22 @@ static int CDVD_read(iop_file_t *f, void *buffer, int size)
     return (size);
 }
 
-static int CDVD_write(iop_file_t *f, void *buffer, int size)
+static int fio_write(iop_file_t *f, void *buffer, int size)
 {
     if (size == 0)
         return 0;
     else {
-        printf("CDVD: dummy CDVD_write function called, this is not a re-writer xD");
+        printf("CDFS: dummy fio_write function called, this is not a re-writer xD");
         return -1;
     }
 }
 
-static int CDVD_lseek(iop_file_t *f, int offset, int whence)
+static int fio_lseek(iop_file_t *f, int offset, int whence)
 {
     int i;
 
 #ifdef DEBUG
-    printf("CDVD: CDVD_lseek called.\n");
+    printf("CDFS: fio_lseek called.\n");
     printf("      kernel_fd... %p\n", f);
     printf("      offset...... %d\n", offset);
     printf("      whence...... %d\n\n", whence);
@@ -247,7 +246,7 @@ static int CDVD_lseek(iop_file_t *f, int offset, int whence)
 
     if (i >= 16) {
 #ifdef DEBUG
-        printf("CDVD_lseek: ERROR: File does not appear to be open!\n");
+        printf("fio_lseek: ERROR: File does not appear to be open!\n");
 #endif
 
         return -1;
@@ -279,11 +278,11 @@ static int CDVD_lseek(iop_file_t *f, int offset, int whence)
     return fd_table[i].filePos;
 }
 
-static int CDVD_openDir(iop_file_t *f, const char *path) {
+static int fio_openDir(iop_file_t *f, const char *path) {
    int j;
 
 #ifdef DEBUG
-    printf("CDVD: CDVD_openDir called.\n");
+    printf("CDFS: fio_openDir called.\n");
     printf("      kernel_fd.. %p\n", f);
     printf("      name....... %s\n", f->device->name);
     printf("      mode....... %d\n\n", f->mode);
@@ -299,7 +298,7 @@ static int CDVD_openDir(iop_file_t *f, const char *path) {
     if (j >= MAX_FOLDERS_OPENED)
         return -3;
 
-    fod_table[j].files = CDVD_GetDir(path, NULL, CDVD_GET_FILES_AND_DIRS, fod_table[j].entries, MAX_FILES_PER_FOLDER);
+    fod_table[j].files = cdfs_getDir(path, NULL, CDFS_GET_FILES_AND_DIRS, fod_table[j].entries, MAX_FILES_PER_FOLDER);
     if (fod_table[j].files < 0) {
         printf("The path doesn't exist\n\n");
         return -2;
@@ -315,7 +314,7 @@ static int CDVD_openDir(iop_file_t *f, const char *path) {
     for (index=0; index < fod_table[j].files; index++) {
         struct TocEntry tocEntry = fod_table[j].entries[index];
         
-        printf("CDVD: CDVD_openDir index=%d TocEntry info\n", index);
+        printf("CDFS: fio_openDir index=%d TocEntry info\n", index);
         printf("      TocEntry....... %p\n", &tocEntry);
         printf("      fileLBA........ %i\n", tocEntry.fileLBA);
         printf("      fileSize....... %i\n", tocEntry.fileSize);
@@ -330,19 +329,19 @@ static int CDVD_openDir(iop_file_t *f, const char *path) {
     return j;
 }
 
-static int CDVD_closeDir(iop_file_t *fd) 
+static int fio_closeDir(iop_file_t *fd) 
 {
     int i;
 
 #ifdef DEBUG
-    printf("CDVD: CDVD_closeDir called.\n");
+    printf("CDFS: fio_closeDir called.\n");
     printf("      kernel_fd.. %p\n", fd);
 #endif
 
     i = (int)fd->privdata;
 
     if (i >= MAX_FOLDERS_OPENED) {
-        printf("CDVD_close: ERROR: File does not appear to be open!\n");
+        printf("fio_close: ERROR: File does not appear to be open!\n");
         return -1;
     }
 
@@ -350,40 +349,40 @@ static int CDVD_closeDir(iop_file_t *fd)
     return 0;
 }
 
-static int CDVD_dread(iop_file_t *fd, io_dirent_t *dirent)
+static int fio_dread(iop_file_t *fd, io_dirent_t *dirent)
 {
     int i;
     int filesIndex;
     struct TocEntry entry;
 #ifdef DEBUG
-    printf("CDVD: CDVD_dread called.\n");
+    printf("CDFS: fio_dread called.\n");
     printf("      kernel_fd.. %p\n", fd);
     printf("      mode....... %p\n\n", dirent);
 #endif
     i = (int)fd->privdata;
 
     if (i >= MAX_FOLDERS_OPENED) {
-        printf("CDVD_dread: ERROR: Folder does not appear to be open!\n\n");
+        printf("fio_dread: ERROR: Folder does not appear to be open!\n\n");
         return -1;
     }
 
     filesIndex = fod_table[i].filesIndex;
     if (filesIndex >= fod_table[i].files) {
-        printf("CDVD_dread: No more items pending to read!\n\n");
+        printf("fio_dread: No more items pending to read!\n\n");
         return -1;
     }
 
     entry = fod_table[i].entries[filesIndex];
 #ifdef DEBUG
-    printf("CDVD_dread: fod_table index=%i, fileIndex=%i\n\n", i, filesIndex);
-    printf("CDVD_dread: entries=%i\n\n", fod_table[i].files);
-    printf("CDVD_dread: reading entry\n\n");
+    printf("fio_dread: fod_table index=%i, fileIndex=%i\n\n", i, filesIndex);
+    printf("fio_dread: entries=%i\n\n", fod_table[i].files);
+    printf("fio_dread: reading entry\n\n");
     printf("      entry.. %p\n", entry);
     printf("      filesize....... %i\n\n", entry.fileSize);
     printf("      filename....... %s\n\n", entry.filename);
     printf("      fileproperties.. %i\n\n", entry.fileProperties);
 #endif
-    dirent->stat.mode = (entry.fileProperties == CDVD_FILEPROPERTY_DIR) ? FIO_SO_IFDIR : FIO_SO_IFREG;
+    dirent->stat.mode = (entry.fileProperties == CDFS_FILEPROPERTY_DIR) ? FIO_SO_IFDIR : FIO_SO_IFREG;
     dirent->stat.attr = entry.fileProperties;
     dirent->stat.size = entry.fileSize;
     memcpy(dirent->stat.ctime, entry.dateStamp, 8);
@@ -396,23 +395,23 @@ static int CDVD_dread(iop_file_t *fd, io_dirent_t *dirent)
     return fod_table[i].filesIndex;
 }
 
-static int CDVD_getstat(iop_file_t *fd, const char *name, iox_stat_t *stat) 
+static int fio_getstat(iop_file_t *fd, const char *name, iox_stat_t *stat) 
 {
     struct TocEntry entry;
     int ret = -1;
 #ifdef DEBUG
-    printf("CDVD: CDVD_getstat called.\n");
+    printf("CDFS: fio_getstat called.\n");
     printf("      kernel_fd.. %p\n", fd);
     printf("      name....... %s\n\n", name);
 #endif
-    ret = CDVD_findfile(name, &entry);
+    ret = cdfs_findfile(name, &entry);
 #ifdef DEBUG
     printf("      entry.. %p\n", entry);
     printf("      filesize....... %i\n\n", entry.fileSize);
     printf("      filename....... %s\n\n", entry.filename);
     printf("      fileproperties.. %i\n\n", entry.fileProperties);
 #endif
-    stat->mode = (entry.fileProperties == CDVD_FILEPROPERTY_DIR) ? FIO_SO_IFDIR : FIO_SO_IFREG;
+    stat->mode = (entry.fileProperties == CDFS_FILEPROPERTY_DIR) ? FIO_SO_IFDIR : FIO_SO_IFREG;
     stat->attr = entry.fileProperties;
     stat->size = entry.fileSize;
     memcpy(stat->ctime, entry.dateStamp, 8);
@@ -422,45 +421,45 @@ static int CDVD_getstat(iop_file_t *fd, const char *name, iox_stat_t *stat)
     return ret;
 }
 
-static int dummy() {
-    printf("CDVD: dummy function called\n\n");
+static int cdfs_dummy() {
+    printf("CDFS: dummy function called\n\n");
     return -5;
 }
 
-static iop_device_ops_t filedriver_ops = {
-    (void *)CDVD_init,
-    (void *)CDVD_deinit,
-    (void *)&dummy,
-    (void *)CDVD_open,
-    (void *)CDVD_close,
-    (void *)CDVD_read,
-    (void *)CDVD_write,
-    (void *)CDVD_lseek,
-    (void *)&dummy,
-    (void *)&dummy,
-    (void *)&dummy,
-    (void *)&dummy,
-    (void *)CDVD_openDir,
-    (void *)CDVD_closeDir,
-    (void *)CDVD_dread,
-    (void *)CDVD_getstat,
-    (void *)&dummy
+static iop_device_ops_t fio_ops = {
+    fio_init,
+    fio_deinit,
+    cdfs_dummy,
+    fio_open,
+    fio_close,
+    fio_read,
+    fio_write,
+    fio_lseek,
+    cdfs_dummy,
+    cdfs_dummy,
+    cdfs_dummy,
+    cdfs_dummy,
+    fio_openDir,
+    fio_closeDir,
+    fio_dread,
+    fio_getstat,
+    cdfs_dummy
 };
 
 int _start(int argc, char **argv)
 {
-    static iop_device_t file_driver;
+    static iop_device_t fio_driver;
 
     // Prepare cache and read mode
-    CDVD_prepare();
+    cdfs_prepare();
 
-    // setup the file_driver structure
-    file_driver.name = UNIT_NAME;
-    file_driver.type = IOP_DT_FS;
-    file_driver.version = 1;
-    file_driver.desc = "CDFS Filedriver";
-    file_driver.ops = &filedriver_ops;
+    // setup the fio_driver structure
+    fio_driver.name = UNIT_NAME;
+    fio_driver.type = IOP_DT_FS;
+    fio_driver.version = 1;
+    fio_driver.desc = "CDFS Filedriver";
+    fio_driver.ops = &fio_ops;
 
     DelDrv(UNIT_NAME);
-    AddDrv(&file_driver);
+    AddDrv(&fio_driver);
 }

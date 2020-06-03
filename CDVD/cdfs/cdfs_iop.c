@@ -140,7 +140,7 @@ static sceCdRMode cdReadMode;
 ***********************************************/
 
 // Used in findfile
-int strcasecmp(const char *s1, const char *s2)
+static int strcasecmp(const char *s1, const char *s2)
 {
     while (*s1 != '\0' && tolower(*s1) == tolower(*s2)) {
         s1++;
@@ -172,20 +172,9 @@ static int isValidDisc(void)
 
     return result;
 }
-    // short length;
-    // unsigned int fileLBA;
-    // unsigned int fileLBA_bigend;
-    // unsigned int fileSize;
-    // unsigned int fileSize_bigend;
-    // unsigned char dateStamp[6];
-    // unsigned char reserved1;
-    // unsigned char fileProperties;
-    // unsigned char reserved2[6];
-    // unsigned char filenameLength;
-    // unsigned char filename[128];
 
 // Copy a TOC Entry from the CD native format to our tidier format
-void TocEntryCopy(struct TocEntry *tocEntry, struct dirTocEntry *internalTocEntry)
+static void TocEntryCopy(struct TocEntry *tocEntry, struct dirTocEntry *internalTocEntry)
 {
     int i;
     int filenamelen;
@@ -296,7 +285,7 @@ static int FindPath(char *pathname)
                     if (CachedDirInfo.cache_size > MAX_DIR_CACHE_SECTORS)
                         CachedDirInfo.cache_size = MAX_DIR_CACHE_SECTORS;
 
-                    if (CDVD_ReadSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
+                    if (cdfs_readSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
 #ifdef DEBUG
                         printf("Couldn't Read from CD !\n\n");
 #endif
@@ -403,7 +392,7 @@ static int FindPath(char *pathname)
         if (CachedDirInfo.cache_size > MAX_DIR_CACHE_SECTORS)
             CachedDirInfo.cache_size = MAX_DIR_CACHE_SECTORS;
 
-        if (CDVD_ReadSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
+        if (cdfs_readSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
 #ifdef DEBUG
             printf("Couldn't Read from CD, trying to read %d sectors, starting at sector %d !\n\n",
                    CachedDirInfo.cache_size, CachedDirInfo.sector_start + CachedDirInfo.cache_offset);
@@ -423,18 +412,18 @@ static int FindPath(char *pathname)
     return TRUE;
 }
 
-static int CDVD_GetVolumeDescriptor(void)
+static int cdfs_getVolumeDescriptor(void)
 {
     // Read until we find the last valid Volume Descriptor
     int volDescSector;
     static struct cdVolDesc localVolDesc;
 
 #ifdef DEBUG
-    printf("CDVD_GetVolumeDescriptor called\n\n");
+    printf("cdfs_getVolumeDescriptor called\n\n");
 #endif
 
     for (volDescSector = 16; volDescSector < 20; volDescSector++) {
-        CDVD_ReadSect(volDescSector, 1, &localVolDesc);
+        cdfs_readSect(volDescSector, 1, &localVolDesc);
 
         // If this is still a volume Descriptor
         if (strncmp(localVolDesc.volID, "CD001", 5) == 0) {
@@ -533,7 +522,7 @@ static int TocEntryCompare(char *filename, const char *extensions)
 
 // returns TRUE if all TOC entries have been retrieved, or
 // returns FALSE if there are more TOC entries to be retrieved
-static int CDVD_Cache_Dir(const char *pathname, enum Cache_getMode getMode)
+static int cdfs_cacheDir(const char *pathname, enum Cache_getMode getMode)
 {
 
     // macke sure that the requested pathname is not directly modified
@@ -585,7 +574,7 @@ static int CDVD_Cache_Dir(const char *pathname, enum Cache_getMode getMode)
                         CachedDirInfo.cache_size = MAX_DIR_CACHE_SECTORS;
 
                     // Now fill the cache with the specified sectors
-                    if (CDVD_ReadSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
+                    if (cdfs_readSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
 #ifdef DEBUG
                         printf("Couldn't Read from CD !\n");
 #endif
@@ -609,7 +598,7 @@ static int CDVD_Cache_Dir(const char *pathname, enum Cache_getMode getMode)
                     CachedDirInfo.cache_size = MAX_DIR_CACHE_SECTORS;
 
                 // Now fill the cache with the specified sectors
-                if (CDVD_ReadSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
+                if (cdfs_readSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
 #ifdef DEBUG
                     printf("Couldn't Read from CD !\n");
 #endif
@@ -659,7 +648,7 @@ static int CDVD_Cache_Dir(const char *pathname, enum Cache_getMode getMode)
                         CachedDirInfo.cache_size = MAX_DIR_CACHE_SECTORS;
 
                     // Now fill the cache with the specified sectors
-                    if (CDVD_ReadSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
+                    if (cdfs_readSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
 #ifdef DEBUG
                         printf("Couldn't Read from CD !\n");
 #endif
@@ -701,7 +690,7 @@ static int CDVD_Cache_Dir(const char *pathname, enum Cache_getMode getMode)
     sceCdDiskReady(0);
 
     // Read the main volume descriptor
-    if (CDVD_GetVolumeDescriptor() != TRUE) {
+    if (cdfs_getVolumeDescriptor() != TRUE) {
 #ifdef DEBUG
         printf("Could not read the CD/DVD Volume Descriptor\n");
 #endif
@@ -728,7 +717,7 @@ static int CDVD_Cache_Dir(const char *pathname, enum Cache_getMode getMode)
         CachedDirInfo.cache_size = MAX_DIR_CACHE_SECTORS;
 
     // Now fill the cache with the specified sectors
-    if (CDVD_ReadSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
+    if (cdfs_readSect(CachedDirInfo.sector_start + CachedDirInfo.cache_offset, CachedDirInfo.cache_size, CachedDirInfo.cache) != TRUE) {
 #ifdef DEBUG
         printf("Couldn't Read from CD !\n");
 #endif
@@ -749,9 +738,259 @@ static int CDVD_Cache_Dir(const char *pathname, enum Cache_getMode getMode)
     return (FindPath(dirname));
 }
 
+static void splitpath(const char *constpath, char *dir, char *fname)
+{
+    // 255 char max path-length is an ISO9660 restriction
+    // we must change this for Joliet or relaxed iso restriction support
+    static char pathcopy[1024 + 1];
+
+    char *slash;
+
+    strncpy(pathcopy, constpath, 1024);
+
+    slash = strrchr(pathcopy, '/');
+
+    // if the path doesn't contain a '/' then look for a '\'
+    if (!slash)
+        slash = strrchr(pathcopy, (int)'\\');
+
+    // if a slash was found
+    if (slash != NULL) {
+        // null terminate the path
+        slash[0] = 0;
+        // and copy the path into 'dir'
+        strncpy(dir, pathcopy, 1024);
+        dir[255] = 0;
+
+        // copy the filename into 'fname'
+        strncpy(fname, slash + 1, 128);
+        fname[128] = 0;
+    } else {
+        dir[0] = 0;
+
+        strncpy(fname, pathcopy, 128);
+        fname[128] = 0;
+    }
+}
+
+/***********************************************
+*                                              *
+*              CDFS FUNCTIONS                  *
+*                                              *
+***********************************************/
+
+int cdfs_prepare(void) {
+
+    // Initialise the directory cache
+    strcpy(CachedDirInfo.pathname, "");  // The pathname of the cached directory
+    CachedDirInfo.valid = FALSE;         // Cache is not valid
+    CachedDirInfo.path_depth = 0;        // 0 = root)
+    CachedDirInfo.sector_start = 0;      // The start sector (LBA) of the cached directory
+    CachedDirInfo.sector_num = 0;        // The total size of the directory (in sectors)
+    CachedDirInfo.cache_offset = 0;      // The offset from sector_start of the cached area
+    CachedDirInfo.cache_size = 0;        // The size of the cached directory area (in sectors)
+
+    if (CachedDirInfo.cache == NULL)
+        CachedDirInfo.cache = (char *)AllocSysMemory(0, MAX_DIR_CACHE_SECTORS * 2048, NULL);
+
+     // setup the cdReadMode structure
+    cdReadMode.trycount = 0;
+    cdReadMode.spindlctrl = SCECdSpinStm;
+    cdReadMode.datapattern = SCECdSecS2048;
+}
+
+int cdfs_start()
+{
+    int ret = sceCdInit(SCECdINoD);
+}
+
+
+int cdfs_findfile(const char *fname, struct TocEntry *tocEntry)
+{
+    static char filename[128 + 1];
+    static char pathname[1024 + 1];
+
+    struct dirTocEntry *tocEntryPointer;
+
+#ifdef DEBUG
+    printf("cdfs_findfile called\n\n");
+#endif
+
+    splitpath(fname, pathname, filename);
+
+#ifdef DEBUG
+    printf("Trying to find file: %s in directory: %s\n", filename, pathname);
+#endif
+
+    //	if ((CachedDirInfo.valid==TRUE)
+    //		&& (strcasecmp(pathname, CachedDirInfo.pathname)==0))
+
+    if ((CachedDirInfo.valid == TRUE) && (ComparePath(pathname) == MATCH)) {
+        // the directory is already cached, so check through the currently
+        // cached chunk of the directory first
+
+        tocEntryPointer = (struct dirTocEntry *)CachedDirInfo.cache;
+
+        for (; tocEntryPointer < (struct dirTocEntry *)(CachedDirInfo.cache + (CachedDirInfo.cache_size * 2048)); tocEntryPointer = (struct dirTocEntry *)((u8 *)tocEntryPointer + tocEntryPointer->length)) {
+            if (tocEntryPointer->length == 0) {
+#ifdef DEBUG
+                printf("Got a null pointer entry, so either reached end of dir, or end of sector\n");
+#endif
+
+                tocEntryPointer = (struct dirTocEntry *)(CachedDirInfo.cache + (((((char *)tocEntryPointer - CachedDirInfo.cache) / 2048) + 1) * 2048));
+            }
+
+            if (tocEntryPointer >= (struct dirTocEntry *)(CachedDirInfo.cache + (CachedDirInfo.cache_size * 2048))) {
+                // reached the end of the cache block
+                break;
+            }
+
+            TocEntryCopy(tocEntry, tocEntryPointer);
+
+            if (strcasecmp(tocEntry->filename, filename) == 0) {
+               // and it matches !!
+               return TRUE;
+            }
+        }  // end of for loop
+
+        // If that was the only dir block, and we havent found it, then fail
+        if (CachedDirInfo.cache_size == CachedDirInfo.sector_num)
+            return FALSE;
+
+        // Otherwise there is more dir to check
+        if (CachedDirInfo.cache_offset == 0) {
+            // If that was the first block then continue with the next block
+            if (cdfs_cacheDir(pathname, CACHE_NEXT) != TRUE)
+                return FALSE;
+        } else {
+            // otherwise (if that wasnt the first block) then start checking from the start
+            if (cdfs_cacheDir(pathname, CACHE_START) != TRUE)
+                return FALSE;
+        }
+    } else {
+#ifdef DEBUG
+        printf("Trying to cache directory\n\n");
+#endif
+        // The wanted directory wasnt already cached, so cache it now
+        if (cdfs_cacheDir(pathname, CACHE_START) != TRUE) {
+#ifdef DEBUG
+            printf("Failed to cache directory\n\n");
+#endif
+            return FALSE;
+        }
+    }
+
+// If we've got here, then we have a block of the directory cached, and want to check
+// from this point, to the end of the dir
+#ifdef DEBUG
+    printf("cache_size = %d\n", CachedDirInfo.cache_size);
+#endif
+    while (CachedDirInfo.cache_size > 0) {
+        tocEntryPointer = (struct dirTocEntry *)CachedDirInfo.cache;
+
+        if (CachedDirInfo.cache_offset == 0)
+            tocEntryPointer = (struct dirTocEntry *)((u8 *)tocEntryPointer + tocEntryPointer->length);
+
+        for (; tocEntryPointer < (struct dirTocEntry *)(CachedDirInfo.cache + (CachedDirInfo.cache_size * 2048)); tocEntryPointer = (struct dirTocEntry *)((u8 *)tocEntryPointer + tocEntryPointer->length)) {
+            if (tocEntryPointer->length == 0) {
+#ifdef DEBUG
+                printf("Got a null pointer entry, so either reached end of dir, or end of sector\n");
+                printf("Offset into cache = %d bytes\n", (char *)tocEntryPointer - CachedDirInfo.cache);
+#endif
+
+                tocEntryPointer = (struct dirTocEntry *)(CachedDirInfo.cache + (((((char *)tocEntryPointer - CachedDirInfo.cache) / 2048) + 1) * 2048));
+            }
+
+            if (tocEntryPointer >= (struct dirTocEntry *)(CachedDirInfo.cache + (CachedDirInfo.cache_size * 2048))) {
+                // reached the end of the cache block
+                break;
+            }
+
+            TocEntryCopy(tocEntry, tocEntryPointer);
+
+            if (strcasecmp(tocEntry->filename, filename) == 0) {
+#ifdef DEBUG
+                printf("Found a matching file\n\n");
+#endif
+                // and it matches !!
+                return TRUE;
+            }
+#ifdef DEBUG
+            printf("Non-matching file - looking for %s , found %s\n", filename, tocEntry->filename);
+#endif
+        }  // end of for loop
+
+#ifdef DEBUG
+        printf("Reached end of cache block\n");
+#endif
+        // cache the next block
+        cdfs_cacheDir(pathname, CACHE_NEXT);
+    }
+
+// we've run out of dir blocks to cache, and still not found it, so fail
+
+#ifdef DEBUG
+    printf("cdfs_findfile: could not find file\n");
+#endif
+
+    return FALSE;
+}
+
+/********************
+* Optimised CD Read *
+********************/
+
+int cdfs_readSect(u32 lsn, u32 sectors, void *buf)
+{
+    int retry;
+    int result = 0;
+    cdReadMode.trycount = 32;
+
+    for (retry = 0; retry < 32; retry++)  // 32 retries
+    {
+        if (retry <= 8)
+            cdReadMode.spindlctrl = 1;  // Try fast reads for first 8 tries
+        else
+            cdReadMode.spindlctrl = 0;  // Then try slow reads
+
+        if (!isValidDisc())
+            return FALSE;
+
+        sceCdDiskReady(0);
+
+        if (sceCdRead(lsn, sectors, buf, &cdReadMode) != TRUE) {
+            // Failed to read
+            if (retry == 31) {
+                // Still failed after last retry
+                memset(buf, 0, (sectors << 11));
+                // printf("Couldn't Read from file for some reason\n");
+                return FALSE;  // error
+            }
+        } else {
+            // Read okay
+            sceCdSync(0);
+            break;
+        }
+
+        result = sceCdGetError();
+        if (result == 0)
+            break;
+    }
+
+    cdReadMode.trycount = 32;
+    cdReadMode.spindlctrl = 1;
+
+    if (result == 0)
+        return TRUE;
+
+    memset(buf, 0, (sectors << 11));
+
+    return FALSE;  // error
+}
+
 // This is the getdir for use by the EE RPC client
 // It DMA's entries to the specified buffer in EE memory
-int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode getMode, struct TocEntry tocEntry[], unsigned int req_entries)
+int cdfs_getDir(const char *pathname, const char *extensions, enum CDFS_getMode getMode, struct TocEntry tocEntry[], unsigned int req_entries)
 {
     int matched_entries;
     int dir_entry;
@@ -774,9 +1013,9 @@ int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode 
     matched_entries = 0;
 
     // pre-cache the dir (and get the new pathname - in-case selected "..")
-    if (CDVD_Cache_Dir(pathname, CACHE_START) != TRUE) {
+    if (cdfs_cacheDir(pathname, CACHE_START) != TRUE) {
 #ifdef DEBUG
-        printf("CDVD_GetDir - Call of CDVD_Cache_Dir failed\n\n");
+        printf("cdfs_getDir - Call of cdfs_cacheDir failed\n\n");
 #endif
 
         return -1;
@@ -786,11 +1025,11 @@ int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode 
     printf("requested directory is %d sectors\n", CachedDirInfo.sector_num);
 #endif
 
-    if ((getMode == CDVD_GET_DIRS_ONLY) || (getMode == CDVD_GET_FILES_AND_DIRS)) {
+    if ((getMode == CDFS_GET_DIRS_ONLY) || (getMode == CDFS_GET_FILES_AND_DIRS)) {
         // Cache the start of the requested directory
-        if (CDVD_Cache_Dir(CachedDirInfo.pathname, CACHE_START) != TRUE) {
+        if (cdfs_cacheDir(CachedDirInfo.pathname, CACHE_START) != TRUE) {
 #ifdef DEBUG
-            printf("CDVD_GetDir - Call of CDVD_Cache_Dir failed\n\n");
+            printf("cdfs_getDir - Call of cdfs_cacheDir failed\n\n");
 #endif
 
             return -1;
@@ -809,7 +1048,7 @@ int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode 
 
         while (1) {
 #ifdef DEBUG
-            printf("CDVD_GetDir - inside while-loop\n\n");
+            printf("cdfs_getDir - inside while-loop\n\n");
 #endif
 
             // parse the current cache block
@@ -881,7 +1120,7 @@ int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode 
 
             // if there is more dir to load, then load next chunk, else finish
             if ((CachedDirInfo.cache_offset + CachedDirInfo.cache_size) < CachedDirInfo.sector_num) {
-                if (CDVD_Cache_Dir(CachedDirInfo.pathname, CACHE_NEXT) != TRUE) {
+                if (cdfs_cacheDir(CachedDirInfo.pathname, CACHE_NEXT) != TRUE) {
                     // failed to cache next block (should return TRUE even if
                     // there is no more directory, as long as a CD read didnt fail
                     return -1;
@@ -894,11 +1133,11 @@ int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode 
     }
 
     // Next do files
-    if ((getMode == CDVD_GET_FILES_ONLY) || (getMode == CDVD_GET_FILES_AND_DIRS)) {
+    if ((getMode == CDFS_GET_FILES_ONLY) || (getMode == CDFS_GET_FILES_AND_DIRS)) {
         // Cache the start of the requested directory
-        if (CDVD_Cache_Dir(CachedDirInfo.pathname, CACHE_START) != TRUE) {
+        if (cdfs_cacheDir(CachedDirInfo.pathname, CACHE_START) != TRUE) {
 #ifdef DEBUG
-            printf("CDVD_GetDir - Call of CDVD_Cache_Dir failed\n\n");
+            printf("cdfs_getDir - Call of cdfs_cacheDir failed\n\n");
 #endif
 
             return -1;
@@ -917,7 +1156,7 @@ int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode 
 
         while (1) {
 #ifdef DEBUG
-            printf("CDVD_GetDir - inside while-loop\n\n");
+            printf("cdfs_getDir - inside while-loop\n\n");
 #endif
 
             // parse the current cache block
@@ -1015,7 +1254,7 @@ int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode 
 
             // if there is more dir to load, then load next chunk, else finish
             if ((CachedDirInfo.cache_offset + CachedDirInfo.cache_size) < CachedDirInfo.sector_num) {
-                if (CDVD_Cache_Dir(CachedDirInfo.pathname, CACHE_NEXT) != TRUE) {
+                if (cdfs_cacheDir(CachedDirInfo.pathname, CACHE_NEXT) != TRUE) {
                     // failed to cache next block (should return TRUE even if
                     // there is no more directory, as long as a CD read didnt fail
                     return -1;
@@ -1031,253 +1270,3 @@ int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode 
     return (matched_entries);
 }
 
-static void _splitpath(const char *constpath, char *dir, char *fname)
-{
-    // 255 char max path-length is an ISO9660 restriction
-    // we must change this for Joliet or relaxed iso restriction support
-    static char pathcopy[1024 + 1];
-
-    char *slash;
-
-    strncpy(pathcopy, constpath, 1024);
-
-    slash = strrchr(pathcopy, '/');
-
-    // if the path doesn't contain a '/' then look for a '\'
-    if (!slash)
-        slash = strrchr(pathcopy, (int)'\\');
-
-    // if a slash was found
-    if (slash != NULL) {
-        // null terminate the path
-        slash[0] = 0;
-        // and copy the path into 'dir'
-        strncpy(dir, pathcopy, 1024);
-        dir[255] = 0;
-
-        // copy the filename into 'fname'
-        strncpy(fname, slash + 1, 128);
-        fname[128] = 0;
-    } else {
-        dir[0] = 0;
-
-        strncpy(fname, pathcopy, 128);
-        fname[128] = 0;
-    }
-}
-
-
-/***********************************************
-*                                              *
-*              CDFS FUNCTIONS                  *
-*                                              *
-***********************************************/
-
-int CDVD_prepare(void) {
-
-    // Initialise the directory cache
-    strcpy(CachedDirInfo.pathname, "");  // The pathname of the cached directory
-    CachedDirInfo.valid = FALSE;         // Cache is not valid
-    CachedDirInfo.path_depth = 0;        // 0 = root)
-    CachedDirInfo.sector_start = 0;      // The start sector (LBA) of the cached directory
-    CachedDirInfo.sector_num = 0;        // The total size of the directory (in sectors)
-    CachedDirInfo.cache_offset = 0;      // The offset from sector_start of the cached area
-    CachedDirInfo.cache_size = 0;        // The size of the cached directory area (in sectors)
-
-    if (CachedDirInfo.cache == NULL)
-        CachedDirInfo.cache = (char *)AllocSysMemory(0, MAX_DIR_CACHE_SECTORS * 2048, NULL);
-
-     // setup the cdReadMode structure
-    cdReadMode.trycount = 0;
-    cdReadMode.spindlctrl = SCECdSpinStm;
-    cdReadMode.datapattern = SCECdSecS2048;
-}
-
-int CDVD_start()
-{
-    int ret = sceCdInit(SCECdINoD);
-}
-
-
-int CDVD_findfile(const char *fname, struct TocEntry *tocEntry)
-{
-    static char filename[128 + 1];
-    static char pathname[1024 + 1];
-
-    struct dirTocEntry *tocEntryPointer;
-
-#ifdef DEBUG
-    printf("CDVD_findfile called\n\n");
-#endif
-
-    _splitpath(fname, pathname, filename);
-
-#ifdef DEBUG
-    printf("Trying to find file: %s in directory: %s\n", filename, pathname);
-#endif
-
-    //	if ((CachedDirInfo.valid==TRUE)
-    //		&& (strcasecmp(pathname, CachedDirInfo.pathname)==0))
-
-    if ((CachedDirInfo.valid == TRUE) && (ComparePath(pathname) == MATCH)) {
-        // the directory is already cached, so check through the currently
-        // cached chunk of the directory first
-
-        tocEntryPointer = (struct dirTocEntry *)CachedDirInfo.cache;
-
-        for (; tocEntryPointer < (struct dirTocEntry *)(CachedDirInfo.cache + (CachedDirInfo.cache_size * 2048)); tocEntryPointer = (struct dirTocEntry *)((u8 *)tocEntryPointer + tocEntryPointer->length)) {
-            if (tocEntryPointer->length == 0) {
-#ifdef DEBUG
-                printf("Got a null pointer entry, so either reached end of dir, or end of sector\n");
-#endif
-
-                tocEntryPointer = (struct dirTocEntry *)(CachedDirInfo.cache + (((((char *)tocEntryPointer - CachedDirInfo.cache) / 2048) + 1) * 2048));
-            }
-
-            if (tocEntryPointer >= (struct dirTocEntry *)(CachedDirInfo.cache + (CachedDirInfo.cache_size * 2048))) {
-                // reached the end of the cache block
-                break;
-            }
-
-            TocEntryCopy(tocEntry, tocEntryPointer);
-
-            if (strcasecmp(tocEntry->filename, filename) == 0) {
-               // and it matches !!
-               return TRUE;
-            }
-        }  // end of for loop
-
-        // If that was the only dir block, and we havent found it, then fail
-        if (CachedDirInfo.cache_size == CachedDirInfo.sector_num)
-            return FALSE;
-
-        // Otherwise there is more dir to check
-        if (CachedDirInfo.cache_offset == 0) {
-            // If that was the first block then continue with the next block
-            if (CDVD_Cache_Dir(pathname, CACHE_NEXT) != TRUE)
-                return FALSE;
-        } else {
-            // otherwise (if that wasnt the first block) then start checking from the start
-            if (CDVD_Cache_Dir(pathname, CACHE_START) != TRUE)
-                return FALSE;
-        }
-    } else {
-#ifdef DEBUG
-        printf("Trying to cache directory\n\n");
-#endif
-        // The wanted directory wasnt already cached, so cache it now
-        if (CDVD_Cache_Dir(pathname, CACHE_START) != TRUE) {
-#ifdef DEBUG
-            printf("Failed to cache directory\n\n");
-#endif
-            return FALSE;
-        }
-    }
-
-// If we've got here, then we have a block of the directory cached, and want to check
-// from this point, to the end of the dir
-#ifdef DEBUG
-    printf("cache_size = %d\n", CachedDirInfo.cache_size);
-#endif
-    while (CachedDirInfo.cache_size > 0) {
-        tocEntryPointer = (struct dirTocEntry *)CachedDirInfo.cache;
-
-        if (CachedDirInfo.cache_offset == 0)
-            tocEntryPointer = (struct dirTocEntry *)((u8 *)tocEntryPointer + tocEntryPointer->length);
-
-        for (; tocEntryPointer < (struct dirTocEntry *)(CachedDirInfo.cache + (CachedDirInfo.cache_size * 2048)); tocEntryPointer = (struct dirTocEntry *)((u8 *)tocEntryPointer + tocEntryPointer->length)) {
-            if (tocEntryPointer->length == 0) {
-#ifdef DEBUG
-                printf("Got a null pointer entry, so either reached end of dir, or end of sector\n");
-                printf("Offset into cache = %d bytes\n", (char *)tocEntryPointer - CachedDirInfo.cache);
-#endif
-
-                tocEntryPointer = (struct dirTocEntry *)(CachedDirInfo.cache + (((((char *)tocEntryPointer - CachedDirInfo.cache) / 2048) + 1) * 2048));
-            }
-
-            if (tocEntryPointer >= (struct dirTocEntry *)(CachedDirInfo.cache + (CachedDirInfo.cache_size * 2048))) {
-                // reached the end of the cache block
-                break;
-            }
-
-            TocEntryCopy(tocEntry, tocEntryPointer);
-
-            if (strcasecmp(tocEntry->filename, filename) == 0) {
-#ifdef DEBUG
-                printf("Found a matching file\n\n");
-#endif
-                // and it matches !!
-                return TRUE;
-            }
-#ifdef DEBUG
-            printf("Non-matching file - looking for %s , found %s\n", filename, tocEntry->filename);
-#endif
-        }  // end of for loop
-
-#ifdef DEBUG
-        printf("Reached end of cache block\n");
-#endif
-        // cache the next block
-        CDVD_Cache_Dir(pathname, CACHE_NEXT);
-    }
-
-// we've run out of dir blocks to cache, and still not found it, so fail
-
-#ifdef DEBUG
-    printf("CDVD_findfile: could not find file\n");
-#endif
-
-    return FALSE;
-}
-
-/********************
-* Optimised CD Read *
-********************/
-
-int CDVD_ReadSect(u32 lsn, u32 sectors, void *buf)
-{
-    int retry;
-    int result = 0;
-    cdReadMode.trycount = 32;
-
-    for (retry = 0; retry < 32; retry++)  // 32 retries
-    {
-        if (retry <= 8)
-            cdReadMode.spindlctrl = 1;  // Try fast reads for first 8 tries
-        else
-            cdReadMode.spindlctrl = 0;  // Then try slow reads
-
-        if (!isValidDisc())
-            return FALSE;
-
-        sceCdDiskReady(0);
-
-        if (sceCdRead(lsn, sectors, buf, &cdReadMode) != TRUE) {
-            // Failed to read
-            if (retry == 31) {
-                // Still failed after last retry
-                memset(buf, 0, (sectors << 11));
-                // printf("Couldn't Read from file for some reason\n");
-                return FALSE;  // error
-            }
-        } else {
-            // Read okay
-            sceCdSync(0);
-            break;
-        }
-
-        result = sceCdGetError();
-        if (result == 0)
-            break;
-    }
-
-    cdReadMode.trycount = 32;
-    cdReadMode.spindlctrl = 1;
-
-    if (result == 0)
-        return TRUE;
-
-    memset(buf, 0, (sectors << 11));
-
-    return FALSE;  // error
-}

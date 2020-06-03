@@ -1,11 +1,7 @@
-#ifndef _CDVD_IOP_H
-#define _CDVD_IOP_H
+#ifndef _CDFS_IOP_H
+#define _CDFS_IOP_H
 
-enum CDVD_getMode {
-    CDVD_GET_FILES_ONLY = 1,
-    CDVD_GET_DIRS_ONLY = 2,
-    CDVD_GET_FILES_AND_DIRS = 3
-};
+#define CDFS_FILEPROPERTY_DIR 0x02
 
 struct TocEntry {
     u32 fileLBA;
@@ -15,10 +11,16 @@ struct TocEntry {
     char filename[128 + 1];
 } __attribute__((packed));
 
-int CDVD_prepare(void);
-int CDVD_start(void);
-int CDVD_findfile(const char *fname, struct TocEntry *tocEntry);
-int CDVD_ReadSect(u32 lsn, u32 sectors, void *buf);
-int CDVD_GetDir(const char *pathname, const char *extensions, enum CDVD_getMode getMode, struct TocEntry tocEntry[], unsigned int req_entries);
+enum CDFS_getMode {
+    CDFS_GET_FILES_ONLY = 1,
+    CDFS_GET_DIRS_ONLY = 2,
+    CDFS_GET_FILES_AND_DIRS = 3
+};
 
-#endif  // _CDVD_H
+int cdfs_prepare(void);
+int cdfs_start(void);
+int cdfs_findfile(const char *fname, struct TocEntry *tocEntry);
+int cdfs_readSect(u32 lsn, u32 sectors, void *buf);
+int cdfs_getDir(const char *pathname, const char *extensions, enum CDFS_getMode getMode, struct TocEntry tocEntry[], unsigned int req_entries);
+
+#endif  // _CDFS_H
