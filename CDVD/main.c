@@ -10,8 +10,8 @@
 #include <dirent.h>
 #include <unistd.h>
 
-extern unsigned char cdvd_irx;
-extern unsigned int size_cdvd_irx;
+extern unsigned char cdfs_irx;
+extern unsigned int size_cdfs_irx;
 
 int main()
 {      
@@ -26,7 +26,7 @@ int main()
 	sbv_patch_enable_lmb();
 
 	/* CDVD */
-	int loaded = SifExecModuleBuffer(&cdvd_irx, size_cdvd_irx, 0, NULL, NULL);
+	int loaded = SifExecModuleBuffer(&cdfs_irx, size_cdfs_irx, 0, NULL, NULL);
 	printf("IRX has been loaded %i\n", loaded);
 
 	// I/O functions to try

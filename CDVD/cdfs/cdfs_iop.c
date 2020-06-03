@@ -12,8 +12,9 @@
 #include <stdio.h>
 #include <sysmem.h>
 #include <iox_stat.h>
-#include "cdvd_iop.h"
 #include <alloc.h>
+
+#include "cdfs_iop.h"
 
 #define TRUE 1
 #define FALSE 0

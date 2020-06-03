@@ -1,7 +1,7 @@
 #ifndef _CDVD_IOP_H
 #define _CDVD_IOP_H
 
-#include "cdvd.h"
+#include "cdfs.h"
 
 // Macros for READ Data pattan
 #define CdSecS2048 0  // sector size 2048

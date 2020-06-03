@@ -7,7 +7,7 @@
 # Review ps2sdk README & LICENSE files for further details.
 
 EE_BIN = hello.elf
-EE_OBJS = main.o cdvd_irx.o
+EE_OBJS = main.o cdfs_irx.o
 EE_LIBS = -lpatches
 
 
@@ -16,11 +16,11 @@ include ../Makefile.pref
 
 irxs: 
 	make -C cdfs
-	bin2c cdfs/cdvd.irx cdvd_irx.c cdvd_irx
+	bin2c cdfs/cdfs.irx cdfs_irx.c cdfs_irx
 
 clean2: clean
 	make -C cdfs clean
-	rm -f cdvd_irx.c
+	rm -f cdfs_irx.c
 
 
 # Execution

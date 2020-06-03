@@ -1,6 +1,6 @@
-IOP_BIN = cdvd.irx
+IOP_BIN = cdfs.irx
 
-IOP_OBJS = cdvd_iop.o imports.o
+IOP_OBJS = cdfs_iop.o imports.o
 
 
 all: $(IOP_BIN)

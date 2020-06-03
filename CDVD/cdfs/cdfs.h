@@ -1,5 +1,5 @@
-#ifndef _CDVD_H
-#define _CDVD_H
+#ifndef _CDFS_H
+#define _CDFS_H
 
 // This header contains the common definitions for libcdvd
 // that are used by both IOP and EE sides
@@ -41,4 +41,4 @@ enum CDVD_getMode {
 #define CdBlock 0x00
 #define CdNonBlock 0x01
 
-#endif  // _CDVD_H
+#endif  // _CDFS_H
