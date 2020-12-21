@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  repository_dispatch:
+    types: [run_build]
+
+jobs:
+  build-ps2:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+       include:
+         - docker: ps2dev/ps2dev:latest
+           platform: "ps2"
+         - docker: ps2dev/ps2dev:experimental
+           platform: "ps2_experimental"
+    container: ${{ matrix.docker }}
+    steps:
+    - name: Install dependencies
+      run: |
+        apk add build-base git
+
+    - uses: actions/checkout@v2
+
+    - name: Compile test core
+      run: |
+        cd HelloWorld && make clean && make
+
+    - name: Upload artifacts
+      if: ${{ success() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: helloWorld_${{ matrix.platform }}
+        path: HelloWorld/hello.elf
