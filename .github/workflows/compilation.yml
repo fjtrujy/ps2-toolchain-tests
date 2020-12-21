@@ -14,8 +14,10 @@ jobs:
        include:
          - docker: ps2dev/ps2dev:latest
            platform: "ps2"
+           dump: ee-objdump
          - docker: ps2dev/ps2dev:experimental
            platform: "ps2_experimental"
+           dump: mips64r5900el-ps2-elf-objdump
     container: ${{ matrix.docker }}
     steps:
     - name: Install dependencies
@@ -27,6 +29,10 @@ jobs:
     - name: Compile test core
       run: |
         cd HelloWorld && make clean && make
+    
+    - name: Print sections
+      run: |
+        cd HelloWorld && ${{ matrix.dump }} -x hello.elf
 
     - name: Upload artifacts
       if: ${{ success() }}
