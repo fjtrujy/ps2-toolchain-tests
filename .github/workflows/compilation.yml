@@ -15,9 +15,11 @@ jobs:
          - docker: ps2dev/ps2dev:latest
            platform: "ps2"
            dump: ee-objdump
+           strip: ee-strip
          - docker: ps2dev/ps2dev:experimental
            platform: "ps2_experimental"
            dump: mips64r5900el-ps2-elf-objdump
+           strip: mips64r5900el-ps2-elf-strip
     container: ${{ matrix.docker }}
     steps:
     - name: Install dependencies
@@ -39,4 +41,19 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: helloWorld_${{ matrix.platform }}
+        path: HelloWorld/hello.elf
+    
+    - name: Strip binary
+      run: |
+        cd HelloWorld && ${{ matrix.strip }} -s hello.elf
+
+    - name: Print Stripped sections
+      run: |
+        cd HelloWorld && ${{ matrix.dump }} -x hello.elf
+
+    - name: Upload stripped artifacts
+      if: ${{ success() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: helloWorld_${{ matrix.platform }}_stripped
         path: HelloWorld/hello.elf
