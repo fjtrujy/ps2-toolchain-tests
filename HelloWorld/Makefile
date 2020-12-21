@@ -8,7 +8,6 @@
 
 EE_BIN = hello.elf
 EE_OBJS = main.o
-EE_LIBS = -lpatches
 
 #Include preferences
 include ../Makefile.pref
